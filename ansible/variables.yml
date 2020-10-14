@@ -1,0 +1,5 @@
+---
+
+user: toto
+jail_path: /sftpusers/chroot
+group_name: sftponly

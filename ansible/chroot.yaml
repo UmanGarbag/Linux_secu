@@ -1,0 +1,57 @@
+---
+
+- name: "SFTP Chroot"
+  hosts: all
+
+  vars_files:
+      - variables.yml
+
+  tasks:
+
+    - name: "Create group sftponly"
+      group:
+        name: sftponly
+        state: present
+
+
+    - name: "Create jail and owner"
+      file:
+        path: "{{ jail_path }}"
+        state: directory
+        owner: esgi
+        group: esgi
+
+    - name: Add user {{ user }} and add to sftpgroup
+      user:
+        name: "{{ user }}"
+        group: "{{ group_name }}"
+        shell: /sbin/nologin
+        password: $5$J6ysWzoLPYpu$I/W0cmsCFhcjHvb/otSb4EgeZWTEOFMinLWyqvPEaN/
+
+
+    - name: "Create jail for {{ user }}"
+      file:
+        path: "{{ jail_path }}/{{ user }}"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ group_name }}"
+        mode: 0700
+
+
+    - name: "Change sshd_config"
+      shell: sed -i "s|/usr/libexec/openssh/sftp-server|internal-sftp -P get,put|g" /etc/ssh/sshd_config
+
+    - name: "add several lines"
+      blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          Match Group {{ group_name }}
+          ChrootDirectory {{ jail_path }}
+          ForceCommand internal-sftp
+          X11Forwarding no
+          AllowTcpForwarding no
+
+    - name: "restart sshd service"
+      service:
+        name: sshd
+        state: restarted

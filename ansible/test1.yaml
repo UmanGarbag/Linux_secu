@@ -1,0 +1,13 @@
+---
+
+- name: "Test shell module"
+  hosts: all
+  tasks:
+    - name: "Sed command"
+      shell: sed -i s'/playbook/ntmfdp/g' /home/sam/test.txt
+
+    - name: "remove a line"
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        state: absent
+        line: 'Match Group sftponly'
