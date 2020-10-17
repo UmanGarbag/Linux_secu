@@ -1,0 +1,26 @@
+$ORIGIN esgi.5si.local.
+$TTL 86400
+@     IN    SOA  dns1.esgi.5si.local.  mail.esgi.5si.local. (
+              2001062501   ; serial
+              21600       ; refresh after 6 hours
+              3600        ; retry after 1 hour
+              604800      ; expire after 1 week
+              86400 )     ; minimum TTL of 1 day
+
+
+@               IN   NS    dns1.esgi.5si.local.
+dns1            IN   A     192.168.1.99
+
+
+@               IN   A     192.168.1.99
+
+trafik.esgi.5si.local.          IN  A 192.168.1.100
+auth.esgi.5si.local.            IN  A 192.168.1.101
+vault.esgi.5si.local.           IN  A 192.168.1.102
+rocketchat.esgi.5si.local.      IN  A 192.168.1.103
+
+pass            IN   CNAME esgi.5si.local.
+fiktra          IN   CNAME esgi.5si.local.
+rchat           IN   CNAME esgi.5si.local. 
+sso             IN   CNAME esgi.5si.local. 
+
