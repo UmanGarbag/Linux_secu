@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+   keycloak:
+      container_name: sso
+      image: jboss/keycloak:11.0.3
+      environment:
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: password
+      ports:
+        - 7443:7443
+        - 8443:8080
+      labels:
+        - "--log.level=DEBUG"
+        - "traefik.enable=true"
+        - "traefik.middlewares.keycloak.redirectscheme=https"
+        #- "traefik.http.services.keycloak.loadbalancer.server.port=8443"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+       # - "traefik.http.services.keycloak.loadbalancer.server.port=7443"
+        - "traefik.http.routers.keycloak.rule=Host(`sso.cyberfilou.site`)"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.services.keycloak.loadbalancer.server.scheme=https"
+      networks:
+        - traefik
+
+networks:
+  traefik:
+    external: true
