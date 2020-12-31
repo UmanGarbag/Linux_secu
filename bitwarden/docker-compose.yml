@@ -1,0 +1,26 @@
+version: "3"
+services:
+  bitwarden:
+    container_name: "bitwarden" 
+    image: bitwardenrs/server
+    env_file: /root/apps/bitwarden/bitwarden.env
+    ports:
+      - 7445:80
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /root/apps/bitwarden:/data/:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.middlewares.bitwarden.redirectscheme=https"
+      - "traefik.http.routers.bitwarden.entrypoints=websecure"
+      - "traefik.http.services.bitwarden.loadbalancer.server.port=80"
+      - "traefik.http.routers.bitwarden.rule=Host(`vault.cyberfilou.site`)"
+      - "traefik.http.routers.bitwarden.tls=true"
+      - "--log.level=DEBUG"      
+
+      
+    networks:
+        - traefik
+networks:
+  traefik:
+    external: true
