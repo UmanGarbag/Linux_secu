@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  rocketchat:
+    container_name: rocketchat
+    image: rocket.chat:3.9
+    command: >
+      bash -c
+        "for i in `seq 1 30`; do
+          node main.js &&
+          s=$$? && break || s=$$?;
+          echo \"Tried $$i times. Waiting 5 secs...\";
+          sleep 5;
+        done; (exit $$s)"
+    restart: unless-stopped
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      - PORT=7444
+      - ROOT_URL=http://192.168.1.1:7444
+      - MONGO_URL=mongodb://mongo:27017/rocketchat
+      - MONGO_OPLOG_URL=mongodb://mongo:27017/local
+      - MAIL_URL=smtp://smtp.email
+#       - HTTP_PROXY=http://proxy.domain.com
+#       - HTTPS_PROXY=http://proxy.domain.com
+    depends_on:
+      - mongo
+    ports:
+      - 7444:7444
+    labels:
+      - "traefik.enable=true"
+      - "traefik.middlewares.rocketchat.redirectscheme=https"
+      - "traefik.http.routers.rocketchat.entrypoints=websecure"
+      - "traefik.http.services.rocketchat.loadbalancer.server.port=7444"
+      - "traefik.http.routers.rocketchat.rule=Host(`rchat.cyberfilou.site`)"
+      - "traefik.http.routers.rocketchat.tls=true"
+      - "--log.level=DEBUG"
+ 
+    networks:
+      - traefik
+  
+  mongo:
+    container_name: mongo
+    image: mongo:4.0
+    restart: unless-stopped
+    volumes:
+     - ./data/db:/data/db
+     #- ./data/dump:/dump
+    command: mongod --smallfiles --oplogSize 128 --replSet rs0 --storageEngine=mmapv1
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - traefik
+  # this container's job is just run the command to initialize the replica set.
+  # it will run the command and remove himself (it will not stay running)
+  mongo-init-replica:
+    image: mongo:4.0
+    command: >
+      bash -c
+        "for i in `seq 1 30`; do
+          mongo mongo/rocketchat --eval \"
+            rs.initiate({
+              _id: 'rs0',
+              members: [ { _id: 0, host: 'localhost:27017' } ]})\" &&
+          s=$$? && break || s=$$?;
+          echo \"Tried $$i times. Waiting 5 secs...\";
+          sleep 5;
+        done; (exit $$s)"
+    depends_on:
+      - mongo
+    networks:
+      - traefik
+
+
+networks:
+  traefik:
+    external: true
+ 
